@@ -1300,28 +1300,28 @@ netcode_write_uint8 :: (p: **u8, value: u8) {
 }
 
 netcode_write_uint16 :: (p: **u8, value: u16) {
-    (p.*)[0] = cast(u8) (value & 0xFF);
-    (p.*)[1] = cast(u8) (value >> 8);
+    p.*[0] = cast(u8) (value & 0xFF);
+    p.*[1] = cast(u8) (value >> 8);
     p.* += 2;
 }
 
 netcode_write_uint32 :: (p: **u8, value: u32) {
-    (p.*)[0] = cast(u8) (value & 0xFF);
-    (p.*)[1] = cast(u8) ((value >> 8 ) & 0xFF);
-    (p.*)[2] = cast(u8) ((value >> 16) & 0xFF);
-    (p.*)[3] = cast(u8) (value >> 24);
+    p.*[0] = cast(u8) (value & 0xFF);
+    p.*[1] = cast(u8) ((value >> 8 ) & 0xFF);
+    p.*[2] = cast(u8) ((value >> 16) & 0xFF);
+    p.*[3] = cast(u8) (value >> 24);
     p.* += 4;
 }
 
 netcode_write_uint64 :: (p: **u8, value: u64) {
-    (p.*)[0] = cast(u8) (value & 0xFF);
-    (p.*)[1] = cast(u8) ((value >> 8 ) & 0xFF);
-    (p.*)[2] = cast(u8) ((value >> 16) & 0xFF);
-    (p.*)[3] = cast(u8) ((value >> 24) & 0xFF);
-    (p.*)[4] = cast(u8) ((value >> 32) & 0xFF);
-    (p.*)[5] = cast(u8) ((value >> 40) & 0xFF);
-    (p.*)[6] = cast(u8) ((value >> 48) & 0xFF);
-    (p.*)[7] = cast(u8) (value >> 56);
+    p.*[0] = cast(u8) (value & 0xFF);
+    p.*[1] = cast(u8) ((value >> 8 ) & 0xFF);
+    p.*[2] = cast(u8) ((value >> 16) & 0xFF);
+    p.*[3] = cast(u8) ((value >> 24) & 0xFF);
+    p.*[4] = cast(u8) ((value >> 32) & 0xFF);
+    p.*[5] = cast(u8) ((value >> 40) & 0xFF);
+    p.*[6] = cast(u8) ((value >> 48) & 0xFF);
+    p.*[7] = cast(u8) (value >> 56);
     p.* += 8;
 }
 
@@ -1338,30 +1338,30 @@ netcode_read_uint8 :: (p: **u8) -> u8 {
 }
 
 netcode_read_uint16 :: (p: **u8) -> u16 {
-    value: u16 = (p.*)[0];
-    value |= (cast(u16) ((p.*)[1])) << 8;
+    value: u16 = p.*[0];
+    value |= (cast(u16) (p.*[1])) << 8;
     p.* += 2;
     return value;
 }
 
 netcode_read_uint32 :: (p: **u8) -> u32 {
-    value: u32 = (p.*)[0];
-    value |= (cast(u32) ((p.*)[1])) << 8;
-    value |= (cast(u32) ((p.*)[2])) << 16;
-    value |= (cast(u32) ((p.*)[3])) << 24;
+    value: u32 = p.*[0];
+    value |= (cast(u32) (p.*[1])) << 8;
+    value |= (cast(u32) (p.*[2])) << 16;
+    value |= (cast(u32) (p.*[3])) << 24;
     p.* += 4;
     return value;
 }
 
 netcode_read_uint64 :: (p: **u8) -> u64 {
-    value: u64 = (p.*)[0];
-    value |= (cast(u64) ((p.*)[1])) << 8;
-    value |= (cast(u64) ((p.*)[2])) << 16;
-    value |= (cast(u64) ((p.*)[3])) << 24;
-    value |= (cast(u64) ((p.*)[4])) << 32;
-    value |= (cast(u64) ((p.*)[5])) << 40;
-    value |= (cast(u64) ((p.*)[6])) << 48;
-    value |= (cast(u64) ((p.*)[7])) << 56;
+    value: u64 = p.*[0];
+    value |= (cast(u64) (p.*[1])) << 8;
+    value |= (cast(u64) (p.*[2])) << 16;
+    value |= (cast(u64) (p.*[3])) << 24;
+    value |= (cast(u64) (p.*[4])) << 32;
+    value |= (cast(u64) (p.*[5])) << 40;
+    value |= (cast(u64) (p.*[6])) << 48;
+    value |= (cast(u64) (p.*[7])) << 56;
     p.* += 8;
     return value;
 }
