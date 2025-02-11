@@ -597,16 +597,16 @@ netcode_server_client_connected :: (using server: netcode_server_t, client_index
 
 netcode_server_client_id :: (using server: netcode_server_t, client_index: int) -> u64 {
     if !running {
-        return false;
+        return 0;
     }
     if client_index < 0 || client_index >= max_clients {
-        return false;
+        return 0;
     }
 
     return client_id[client_index];
 }
 
-netcode_server_client_address :: (using server: netcode_server_t, client_index: int) -> netcode_address_t {
+netcode_server_client_address :: (using server: netcode_server_t, client_index: int) -> *netcode_address_t {
     if !running {
         return null;
     }
@@ -614,7 +614,7 @@ netcode_server_client_address :: (using server: netcode_server_t, client_index: 
         return null;
     }
 
-    return client_address[client_index];
+    return *client_address[client_index];
 }
 
 netcode_server_disconnect_client :: (using server: *netcode_server_t, client_index: int) {
