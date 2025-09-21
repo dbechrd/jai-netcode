@@ -440,7 +440,7 @@ test_connection_request_packet :: () {
     // copy to a second buffer then encrypt it in place (we need the unencrypted token for verification later on)
 
     encrypted_connect_token_data: ConnectTokenPrivateDataBuf;
-    array_copy(encrypted_connect_token_data, connect_token_data);
+    array_copy_data(encrypted_connect_token_data, connect_token_data);
 
     connect_token_expire_timestamp := current_time_ms() + seconds_to_apollo(30);
     connect_token_nonce: BigNonceBuf;
@@ -456,11 +456,11 @@ test_connection_request_packet :: () {
     input_packet: netcode_connection_request_packet_t;
     assert_equal(input_packet.type, NETCODE_CONNECTION_REQUEST_PACKET);
 
-    array_copy(input_packet.version_info, NETCODE_VERSION_INFO);
+    array_copy_data(input_packet.version_info, NETCODE_VERSION_INFO);
     input_packet.protocol_id = TEST_PROTOCOL_ID;
     input_packet.connect_token_expire_timestamp = connect_token_expire_timestamp;
-    array_copy(input_packet.connect_token_nonce, connect_token_nonce);
-    array_copy(input_packet.connect_token_data, encrypted_connect_token_data);
+    array_copy_data(input_packet.connect_token_nonce, connect_token_nonce);
+    array_copy_data(input_packet.connect_token_data, encrypted_connect_token_data);
 
     // write the connection request packet to a buffer
 
@@ -758,16 +758,16 @@ test_connect_token_public :: () {
     // wrap a public connect token around the private connect token data
 
     input_connect_token: netcode_connect_token_t;
-    array_copy(input_connect_token.version_info, NETCODE_VERSION_INFO);
+    array_copy_data(input_connect_token.version_info, NETCODE_VERSION_INFO);
     input_connect_token.protocol_id = TEST_PROTOCOL_ID;
     input_connect_token.create_timestamp = create_timestamp;
     input_connect_token.expire_timestamp = expire_timestamp;
-    array_copy(input_connect_token.nonce, connect_token_nonce);
-    array_copy(input_connect_token.private_data, connect_token_private_data);
+    array_copy_data(input_connect_token.nonce, connect_token_nonce);
+    array_copy_data(input_connect_token.private_data, connect_token_private_data);
     input_connect_token.num_server_addresses = 1;
     input_connect_token.server_addresses[0] = server_address;
-    array_copy(input_connect_token.client_to_server_key, connect_token_private.client_to_server_key);
-    array_copy(input_connect_token.server_to_client_key, connect_token_private.server_to_client_key);
+    array_copy_data(input_connect_token.client_to_server_key, connect_token_private.client_to_server_key);
+    array_copy_data(input_connect_token.server_to_client_key, connect_token_private.server_to_client_key);
     input_connect_token.timeout_seconds = TEST_TIMEOUT_SECONDS;
 
     // write the connect token to a buffer
@@ -1196,7 +1196,7 @@ test_client_server_connect :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
 
     server_address := "[::1]:40000";
     server := netcode_server_create(server_address, *server_config, time);
@@ -1300,7 +1300,7 @@ client_server_socket_connect :: (client_address: string, client_address2: string
 
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
     server := netcode_server_create_overload(server_address, server_address2, server_config, time);
     assert_not_null(server);
 
@@ -1369,7 +1369,7 @@ test_client_server_keep_alive :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
 
     server_address := "[::1]:40000";
     server := netcode_server_create(server_address, server_config, time);
@@ -1449,7 +1449,7 @@ test_client_server_multiple_clients :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
@@ -1650,7 +1650,7 @@ test_client_server_multiple_servers :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
     server := netcode_server_create("[::1]:40000", server_config, time);
     assert_not_null(server);
 
@@ -1826,7 +1826,7 @@ test_client_error_connection_timed_out :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
 
@@ -1900,7 +1900,7 @@ test_client_error_connection_response_timeout :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
 
@@ -1958,7 +1958,7 @@ test_client_error_connection_request_timeout :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
 
@@ -2018,7 +2018,7 @@ test_client_error_connection_denied :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
 
@@ -2111,7 +2111,7 @@ test_client_side_disconnect :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
@@ -2188,7 +2188,7 @@ test_server_side_disconnect :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
@@ -2271,7 +2271,7 @@ test_client_reconnect :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
 
     server := netcode_server_create("[::1]:40000", server_config, time);
     assert_not_null(server);
@@ -2381,7 +2381,7 @@ test_disable_timeout :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
@@ -2529,7 +2529,7 @@ test_loopback :: () {
     server_config.network_simulator = network_simulator;
     server_config.callback_context = *ctx;
     server_config.send_loopback_packet_callback = server_send_loopback_packet_callback;
-    array_copy(server_config.private_key, private_key);
+    array_copy_data(server_config.private_key, private_key);
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);

@@ -442,18 +442,18 @@ netcode_generate_connect_token :: (
     // wrap a connect token around the private connect token data
 
     connect_token: netcode_connect_token_t;
-    array_copy(connect_token.version_info, NETCODE_VERSION_INFO);
+    array_copy_data(connect_token.version_info, NETCODE_VERSION_INFO);
     connect_token.protocol_id = protocol_id;
     connect_token.create_timestamp = create_timestamp;
     connect_token.expire_timestamp = expire_timestamp;
-    array_copy(connect_token.nonce, nonce);
-    array_copy(connect_token.private_data, connect_token_data);
+    array_copy_data(connect_token.nonce, nonce);
+    array_copy_data(connect_token.private_data, connect_token_data);
     connect_token.num_server_addresses = parsed_public_server_addresses.count;
     for parsed_public_server_addresses {
         connect_token.server_addresses[it_index] = it;
     }
-    array_copy(connect_token.client_to_server_key, connect_token_private.client_to_server_key);
-    array_copy(connect_token.server_to_client_key, connect_token_private.server_to_client_key);
+    array_copy_data(connect_token.client_to_server_key, connect_token_private.client_to_server_key);
+    array_copy_data(connect_token.server_to_client_key, connect_token_private.server_to_client_key);
     connect_token.timeout_seconds = timeout_seconds;
 
     // write the connect token to the output buffer
@@ -815,7 +815,7 @@ netcode_server_connect_loopback_client :: (using server: *netcode_server_t, clie
     client_last_packet_receive_time[client_index] = time;
 
     if user_data.count > 0 {
-        array_copy(client_user_data[client_index], user_data);
+        array_copy_data(client_user_data[client_index], user_data);
     } else {
         array_zero(client_user_data[client_index]);
     }
@@ -1009,12 +1009,12 @@ netcode_parse_address :: (address_string_in: string, address: *netcode_address_t
         case .IPv4;
             address.type = NETCODE_ADDRESS_IPV4;
             address.port = addr.port;
-            array_copy(address.data.ipv4, addr.data.v4);
+            array_copy_data(address.data.ipv4, addr.data.v4);
             return NETCODE_OK;
         case .IPv6;
             address.type = NETCODE_ADDRESS_IPV6;
             address.port = addr.port;
-            array_copy(address.data.ipv6, addr.data.v6);
+            array_copy_data(address.data.ipv6, addr.data.v6);
             return NETCODE_OK;
     }
 
@@ -1028,11 +1028,11 @@ netcode_address_to_string :: (address: netcode_address_t) -> string {
         case NETCODE_ADDRESS_IPV4;
             ip.type = .IPv4;
             ip.port = address.port;
-            array_copy(ip.data.v4, address.data.ipv4);
+            array_copy_data(ip.data.v4, address.data.ipv4);
         case NETCODE_ADDRESS_IPV6;
             ip.type = .IPv6;
             ip.port = address.port;
-            array_copy(ip.data.v6, address.data.ipv6);
+            array_copy_data(ip.data.v6, address.data.ipv6);
     }
 
     return address_to_string(ip);
@@ -1564,7 +1564,7 @@ netcode_generate_connect_token_private :: (connect_token: *netcode_connect_token
     netcode_generate_key(connect_token.server_to_client_key);
 
     if user_data.count > 0 {
-        array_copy(connect_token.user_data, user_data);
+        array_copy_data(connect_token.user_data, user_data);
     }
 }
 
@@ -3111,8 +3111,8 @@ netcode_encryption_manager_add_encryption_mapping :: (
             timeout[it] = _timeout;
             expire_time[it] = _expire_time;
             last_access_time[it] = _time;
-            array_copy(send_key[it], _send_key);
-            array_copy(receive_key[it], _receive_key);
+            array_copy_data(send_key[it], _send_key);
+            array_copy_data(receive_key[it], _receive_key);
             return true;
         }
     }
@@ -3123,8 +3123,8 @@ netcode_encryption_manager_add_encryption_mapping :: (
             expire_time[it] = _expire_time;
             last_access_time[it] = _time;
             address[it] = _address;
-            array_copy(send_key[it], _send_key);
-            array_copy(receive_key[it], _receive_key);
+            array_copy_data(send_key[it], _send_key);
+            array_copy_data(receive_key[it], _receive_key);
             if it >= num_encryption_mappings {
                 num_encryption_mappings = it + 1;
             }
@@ -3266,7 +3266,7 @@ netcode_connect_token_entries_find_or_add :: (connect_token_entries: *[NETCODE_M
     if matching_token_index == -1 {
         connect_token_entries.*[oldest_token_index].time = time;
         connect_token_entries.*[oldest_token_index].address = address;
-        array_copy(connect_token_entries.*[oldest_token_index].mac, mac);
+        array_copy_data(connect_token_entries.*[oldest_token_index].mac, mac);
         return true;
     }
 
@@ -3767,7 +3767,7 @@ netcode_server_process_connection_request_packet :: (using server: *netcode_serv
 
     challenge_token: netcode_challenge_token_t;
     challenge_token.client_id = connect_token_private.client_id;
-    array_copy(challenge_token.user_data, connect_token_private.user_data);
+    array_copy_data(challenge_token.user_data, connect_token_private.user_data);
 
     challenge_packet: netcode_connection_challenge_packet_t;
     assert(challenge_packet.type == NETCODE_CONNECTION_CHALLENGE_PACKET);
@@ -3818,7 +3818,7 @@ netcode_server_connect_client :: (using server: *netcode_server_t, _client_index
     netcode_address_map_set(*client_address_map, _address, _client_index);
     client_last_packet_send_time[_client_index] = time;
     client_last_packet_receive_time[_client_index] = time;
-    array_copy(client_user_data[_client_index], _user_data);
+    array_copy_data(client_user_data[_client_index], _user_data);
 
     netcode_log(.VERBOSE_ONLY, "server accepted client % % in slot %\n", netcode_address_to_string(_address,, temp), _client_id, _client_index);
 
