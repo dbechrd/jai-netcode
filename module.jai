@@ -442,18 +442,18 @@ netcode_generate_connect_token :: (
     // wrap a connect token around the private connect token data
 
     connect_token: netcode_connect_token_t;
-    array_copy_data(connect_token.version_info, NETCODE_VERSION_INFO);
+    connect_token.version_info = NETCODE_VERSION_INFO;
     connect_token.protocol_id = protocol_id;
     connect_token.create_timestamp = create_timestamp;
     connect_token.expire_timestamp = expire_timestamp;
-    array_copy_data(connect_token.nonce, nonce);
-    array_copy_data(connect_token.private_data, connect_token_data);
+    connect_token.nonce = nonce;
+    connect_token.private_data = connect_token_data;
     connect_token.num_server_addresses = parsed_public_server_addresses.count;
     for parsed_public_server_addresses {
         connect_token.server_addresses[it_index] = it;
     }
-    array_copy_data(connect_token.client_to_server_key, connect_token_private.client_to_server_key);
-    array_copy_data(connect_token.server_to_client_key, connect_token_private.server_to_client_key);
+    connect_token.client_to_server_key = connect_token_private.client_to_server_key;
+    connect_token.server_to_client_key = connect_token_private.server_to_client_key;
     connect_token.timeout_seconds = timeout_seconds;
 
     // write the connect token to the output buffer
@@ -769,10 +769,10 @@ netcode_server_process_packet :: (using server: *netcode_server_t, from: netcode
         assert(client_index < max_clients);
         encryption_index = client_encryption_index[client_index];
     } else {
-        encryption_index = netcode_encryption_manager_find_encryption_mapping(*encryption_manager, from, time);
+        encryption_index = netcode_encryption_manager_find_encryption_mapping(encryption_manager, from, time);
     }
 
-    read_packet_key := netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index);
+    read_packet_key := netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index);
     if read_packet_key == null && packet_data[0] != 0 {
         netcode_log(.VERY_VERBOSE_ONLY, "server could not process packet (type %) because no encryption mapping exists for %\n", packet_data[0] & 0xF, netcode_address_to_string(from,, temp));
         return;
@@ -815,7 +815,7 @@ netcode_server_connect_loopback_client :: (using server: *netcode_server_t, clie
     client_last_packet_receive_time[client_index] = time;
 
     if user_data.count > 0 {
-        array_copy_data(client_user_data[client_index], user_data);
+        client_user_data[client_index] = user_data;
     } else {
         array_zero(client_user_data[client_index]);
     }
@@ -1009,12 +1009,12 @@ netcode_parse_address :: (address_string_in: string, address: *netcode_address_t
         case .IPv4;
             address.type = NETCODE_ADDRESS_IPV4;
             address.port = addr.port;
-            array_copy_data(address.data.ipv4, addr.data.v4);
+            address.data.ipv4 = addr.data.v4;
             return NETCODE_OK;
         case .IPv6;
             address.type = NETCODE_ADDRESS_IPV6;
             address.port = addr.port;
-            array_copy_data(address.data.ipv6, addr.data.v6);
+            address.data.ipv6 = addr.data.v6;
             return NETCODE_OK;
     }
 
@@ -1028,11 +1028,11 @@ netcode_address_to_string :: (address: netcode_address_t) -> string {
         case NETCODE_ADDRESS_IPV4;
             ip.type = .IPv4;
             ip.port = address.port;
-            array_copy_data(ip.data.v4, address.data.ipv4);
+            ip.data.v4 = address.data.ipv4;
         case NETCODE_ADDRESS_IPV6;
             ip.type = .IPv6;
             ip.port = address.port;
-            array_copy_data(ip.data.v6, address.data.ipv6);
+            ip.data.v6 = address.data.ipv6;
     }
 
     return address_to_string(ip);
@@ -1564,7 +1564,7 @@ netcode_generate_connect_token_private :: (connect_token: *netcode_connect_token
     netcode_generate_key(connect_token.server_to_client_key);
 
     if user_data.count > 0 {
-        array_copy_data(connect_token.user_data, user_data);
+        connect_token.user_data = user_data;
     }
 }
 
@@ -2897,14 +2897,14 @@ netcode_client_receive_packets :: (using client: *netcode_client_t) {
                 continue;
             }
 
-            netcode_client_process_packet_internal(client, *from, packet, sequence);
+            netcode_client_process_packet_internal(client, from, packet, sequence);
         }
     } else {
         // process packets received from network simulator
 
         num_packets_received := netcode_network_simulator_receive_packets(
             config.network_simulator,
-            *address,
+            address,
             NETCODE_CLIENT_MAX_RECEIVE_PACKETS,
             receive_packet_data,
             receive_from
@@ -2927,7 +2927,7 @@ netcode_client_receive_packets :: (using client: *netcode_client_t) {
                 continue;
             }
 
-            netcode_client_process_packet_internal(client, *receive_from[it], packet, sequence);
+            netcode_client_process_packet_internal(client, receive_from[it], packet, sequence);
         }
     }
 }
@@ -3022,7 +3022,7 @@ netcode_client_connect_to_next_server :: (using client: *netcode_client_t) -> bo
     netcode_client_reset_before_next_connect(client);
 
     netcode_log(.VERBOSE_ONLY, "client connecting to next server % [%/%]\n",
-        netcode_address_to_string(*server_address,, temp),
+        netcode_address_to_string(server_address,, temp),
         server_address_index + 1,
         connect_token.num_server_addresses
     );
@@ -3111,8 +3111,8 @@ netcode_encryption_manager_add_encryption_mapping :: (
             timeout[it] = _timeout;
             expire_time[it] = _expire_time;
             last_access_time[it] = _time;
-            array_copy_data(send_key[it], _send_key);
-            array_copy_data(receive_key[it], _receive_key);
+            send_key[it] = _send_key;
+            receive_key[it] = _receive_key;
             return true;
         }
     }
@@ -3123,8 +3123,8 @@ netcode_encryption_manager_add_encryption_mapping :: (
             expire_time[it] = _expire_time;
             last_access_time[it] = _time;
             address[it] = _address;
-            array_copy_data(send_key[it], _send_key);
-            array_copy_data(receive_key[it], _receive_key);
+            send_key[it] = _send_key;
+            receive_key[it] = _receive_key;
             if it >= num_encryption_mappings {
                 num_encryption_mappings = it + 1;
             }
@@ -3266,7 +3266,7 @@ netcode_connect_token_entries_find_or_add :: (connect_token_entries: *[NETCODE_M
     if matching_token_index == -1 {
         connect_token_entries.*[oldest_token_index].time = time;
         connect_token_entries.*[oldest_token_index].address = address;
-        array_copy_data(connect_token_entries.*[oldest_token_index].mac, mac);
+        connect_token_entries.*[oldest_token_index].mac = mac;
         return true;
     }
 
@@ -3767,7 +3767,7 @@ netcode_server_process_connection_request_packet :: (using server: *netcode_serv
 
     challenge_token: netcode_challenge_token_t;
     challenge_token.client_id = connect_token_private.client_id;
-    array_copy_data(challenge_token.user_data, connect_token_private.user_data);
+    challenge_token.user_data = connect_token_private.user_data;
 
     challenge_packet: netcode_connection_challenge_packet_t;
     assert(challenge_packet.type == NETCODE_CONNECTION_CHALLENGE_PACKET);
@@ -3818,7 +3818,7 @@ netcode_server_connect_client :: (using server: *netcode_server_t, _client_index
     netcode_address_map_set(*client_address_map, _address, _client_index);
     client_last_packet_send_time[_client_index] = time;
     client_last_packet_receive_time[_client_index] = time;
-    array_copy_data(client_user_data[_client_index], _user_data);
+    client_user_data[_client_index] = _user_data;
 
     netcode_log(.VERBOSE_ONLY, "server accepted client % % in slot %\n", netcode_address_to_string(_address,, temp), _client_id, _client_index);
 
@@ -3850,7 +3850,7 @@ netcode_server_process_connection_response_packet :: (using server: *netcode_ser
         return;
     }
 
-    packet_send_key := netcode_encryption_manager_get_send_key(*encryption_manager, encryption_index);
+    packet_send_key := netcode_encryption_manager_get_send_key(encryption_manager, encryption_index);
     if packet_send_key == null {
         netcode_log(.VERY_VERBOSE_ONLY, "server ignored connection response. no packet send key\n");
         return;
@@ -3878,7 +3878,7 @@ netcode_server_process_connection_response_packet :: (using server: *netcode_ser
     client_index := netcode_server_find_free_client_index(server);
     assert(client_index != -1);
 
-    timeout_seconds := netcode_encryption_manager_get_timeout(*encryption_manager, encryption_index);
+    timeout_seconds := netcode_encryption_manager_get_timeout(encryption_manager, encryption_index);
 
     netcode_server_connect_client(server, client_index, from, challenge_token.client_id, encryption_index, timeout_seconds, challenge_token.user_data);
 }
@@ -3945,10 +3945,10 @@ netcode_server_read_and_process_packet :: (using server: *netcode_server_t, from
         assert(client_index < max_clients);
         encryption_index = client_encryption_index[client_index];
     } else {
-        encryption_index = netcode_encryption_manager_find_encryption_mapping(*encryption_manager, from, time);
+        encryption_index = netcode_encryption_manager_find_encryption_mapping(encryption_manager, from, time);
     }
 
-    read_packet_key := netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index);
+    read_packet_key := netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index);
     if read_packet_key == null && packet_data[0] != 0 {
         netcode_log(.VERY_VERBOSE_ONLY, "server could not process packet (type %) because no encryption mapping exists for %\n", packet_data[0] & 0xF, netcode_address_to_string(from,, temp));
         return;

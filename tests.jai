@@ -338,7 +338,7 @@ test_connect_token :: () {
     // write it to a buffer
 
     buffer: ConnectTokenPrivateDataBuf;
-    netcode_write_connect_token_private(*input_token, buffer);
+    netcode_write_connect_token_private(input_token, buffer);
 
     // encrypt the buffer
 
@@ -383,7 +383,7 @@ test_challenge_token :: () {
 
     buffer: ChallengeTokenBuf;
 
-    netcode_write_challenge_token(*input_token, buffer);
+    netcode_write_challenge_token(input_token, buffer);
 
     // encrypt the buffer
 
@@ -435,12 +435,12 @@ test_connection_request_packet :: () {
     // write the conect token to a buffer (non-encrypted)
 
     connect_token_data: ConnectTokenPrivateDataBuf;
-    netcode_write_connect_token_private(*input_token, connect_token_data);
+    netcode_write_connect_token_private(input_token, connect_token_data);
 
     // copy to a second buffer then encrypt it in place (we need the unencrypted token for verification later on)
 
     encrypted_connect_token_data: ConnectTokenPrivateDataBuf;
-    array_copy_data(encrypted_connect_token_data, connect_token_data);
+    encrypted_connect_token_data = connect_token_data;
 
     connect_token_expire_timestamp := current_time_ms() + seconds_to_apollo(30);
     connect_token_nonce: BigNonceBuf;
@@ -456,11 +456,11 @@ test_connection_request_packet :: () {
     input_packet: netcode_connection_request_packet_t;
     assert_equal(input_packet.type, NETCODE_CONNECTION_REQUEST_PACKET);
 
-    array_copy_data(input_packet.version_info, NETCODE_VERSION_INFO);
+    input_packet.version_info = NETCODE_VERSION_INFO;
     input_packet.protocol_id = TEST_PROTOCOL_ID;
     input_packet.connect_token_expire_timestamp = connect_token_expire_timestamp;
-    array_copy_data(input_packet.connect_token_nonce, connect_token_nonce);
-    array_copy_data(input_packet.connect_token_data, encrypted_connect_token_data);
+    input_packet.connect_token_nonce = connect_token_nonce;
+    input_packet.connect_token_data = encrypted_connect_token_data;
 
     // write the connection request packet to a buffer
 
@@ -741,7 +741,7 @@ test_connect_token_public :: () {
     // write it to a buffer
 
     connect_token_private_data: ConnectTokenPrivateDataBuf;
-    netcode_write_connect_token_private(*connect_token_private, connect_token_private_data);
+    netcode_write_connect_token_private(connect_token_private, connect_token_private_data);
 
     // encrypt the buffer
 
@@ -758,16 +758,16 @@ test_connect_token_public :: () {
     // wrap a public connect token around the private connect token data
 
     input_connect_token: netcode_connect_token_t;
-    array_copy_data(input_connect_token.version_info, NETCODE_VERSION_INFO);
+    input_connect_token.version_info = NETCODE_VERSION_INFO;
     input_connect_token.protocol_id = TEST_PROTOCOL_ID;
     input_connect_token.create_timestamp = create_timestamp;
     input_connect_token.expire_timestamp = expire_timestamp;
-    array_copy_data(input_connect_token.nonce, connect_token_nonce);
-    array_copy_data(input_connect_token.private_data, connect_token_private_data);
+    input_connect_token.nonce = connect_token_nonce;
+    input_connect_token.private_data = connect_token_private_data;
     input_connect_token.num_server_addresses = 1;
     input_connect_token.server_addresses[0] = server_address;
-    array_copy_data(input_connect_token.client_to_server_key, connect_token_private.client_to_server_key);
-    array_copy_data(input_connect_token.server_to_client_key, connect_token_private.server_to_client_key);
+    input_connect_token.client_to_server_key = connect_token_private.client_to_server_key;
+    input_connect_token.server_to_client_key = connect_token_private.server_to_client_key;
     input_connect_token.timeout_seconds = TEST_TIMEOUT_SECONDS;
 
     // write the connect token to a buffer
@@ -825,19 +825,19 @@ test_encryption_manager :: () {
     // add the encryption mappings to the manager and make sure they can be looked up by address
 
     for * encryption_mapping {
-        encryption_index := netcode_encryption_manager_find_encryption_mapping(*encryption_manager, it.address, time);
+        encryption_index := netcode_encryption_manager_find_encryption_mapping(encryption_manager, it.address, time);
 
         assert_equal(encryption_index, -1);
 
-        assert_null(netcode_encryption_manager_get_send_key(*encryption_manager, encryption_index));
-        assert_null(netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index));
+        assert_null(netcode_encryption_manager_get_send_key(encryption_manager, encryption_index));
+        assert_null(netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index));
 
         assert_true(netcode_encryption_manager_add_encryption_mapping(*encryption_manager, it.address, it.send_key, it.receive_key, time, seconds_to_apollo(-1), TEST_TIMEOUT_SECONDS));
 
-        encryption_index = netcode_encryption_manager_find_encryption_mapping(*encryption_manager, it.address, time);
+        encryption_index = netcode_encryption_manager_find_encryption_mapping(encryption_manager, it.address, time);
 
-        send_key := netcode_encryption_manager_get_send_key(*encryption_manager, encryption_index);
-        receive_key := netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index);
+        send_key := netcode_encryption_manager_get_send_key(encryption_manager, encryption_index);
+        receive_key := netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index);
 
         assert_not_null(send_key);
         assert_not_null(receive_key);
@@ -865,10 +865,10 @@ test_encryption_manager :: () {
     // make sure the encryption mappings that were removed can no longer be looked up by address
 
     for * encryption_mapping {
-        encryption_index := netcode_encryption_manager_find_encryption_mapping(*encryption_manager, it.address, time);
+        encryption_index := netcode_encryption_manager_find_encryption_mapping(encryption_manager, it.address, time);
 
-        send_key := netcode_encryption_manager_get_send_key(*encryption_manager, encryption_index);
-        receive_key := netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index);
+        send_key := netcode_encryption_manager_get_send_key(encryption_manager, encryption_index);
+        receive_key := netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index);
 
         if it_index > 0 && it_index < NUM_ENCRYPTION_MAPPINGS - 1 {
             assert_not_null(send_key);
@@ -907,10 +907,10 @@ test_encryption_manager :: () {
     // all encryption mappings should be able to be looked up by address again
 
     for * encryption_mapping {
-        encryption_index := netcode_encryption_manager_find_encryption_mapping(*encryption_manager, it.address, time);
+        encryption_index := netcode_encryption_manager_find_encryption_mapping(encryption_manager, it.address, time);
 
-        send_key := netcode_encryption_manager_get_send_key(*encryption_manager, encryption_index);
-        receive_key := netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index);
+        send_key := netcode_encryption_manager_get_send_key(encryption_manager, encryption_index);
+        receive_key := netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index);
 
         assert_not_null(send_key);
         assert_not_null(receive_key);
@@ -924,10 +924,10 @@ test_encryption_manager :: () {
     time += TEST_TIMEOUT_SECONDS * 2;
 
     for * encryption_mapping {
-        encryption_index := netcode_encryption_manager_find_encryption_mapping(*encryption_manager, it.address, time);
+        encryption_index := netcode_encryption_manager_find_encryption_mapping(encryption_manager, it.address, time);
 
-        send_key := netcode_encryption_manager_get_send_key(*encryption_manager, encryption_index);
-        receive_key := netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index);
+        send_key := netcode_encryption_manager_get_send_key(encryption_manager, encryption_index);
+        receive_key := netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index);
 
         assert_null(send_key);
         assert_null(receive_key);
@@ -936,12 +936,12 @@ test_encryption_manager :: () {
     // add the same encryption mappings after timeout
 
     for * encryption_mapping {
-        encryption_index := netcode_encryption_manager_find_encryption_mapping(*encryption_manager, it.address, time);
+        encryption_index := netcode_encryption_manager_find_encryption_mapping(encryption_manager, it.address, time);
 
         assert_equal(encryption_index, -1);
 
-        assert_null(netcode_encryption_manager_get_send_key(*encryption_manager, encryption_index));
-        assert_null(netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index));
+        assert_null(netcode_encryption_manager_get_send_key(encryption_manager, encryption_index));
+        assert_null(netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index));
 
         assert_true(netcode_encryption_manager_add_encryption_mapping(
             *encryption_manager,
@@ -953,10 +953,10 @@ test_encryption_manager :: () {
             TEST_TIMEOUT_SECONDS)
         );
 
-        encryption_index = netcode_encryption_manager_find_encryption_mapping(*encryption_manager, it.address, time);
+        encryption_index = netcode_encryption_manager_find_encryption_mapping(encryption_manager, it.address, time);
 
-        send_key := netcode_encryption_manager_get_send_key(*encryption_manager, encryption_index);
-        receive_key := netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index);
+        send_key := netcode_encryption_manager_get_send_key(encryption_manager, encryption_index);
+        receive_key := netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index);
 
         assert_not_null(send_key);
         assert_not_null(receive_key);
@@ -970,10 +970,10 @@ test_encryption_manager :: () {
     netcode_encryption_manager_reset(*encryption_manager);
 
     for * encryption_mapping {
-        encryption_index := netcode_encryption_manager_find_encryption_mapping(*encryption_manager, it.address, time);
+        encryption_index := netcode_encryption_manager_find_encryption_mapping(encryption_manager, it.address, time);
 
-        send_key := netcode_encryption_manager_get_send_key(*encryption_manager, encryption_index);
-        receive_key := netcode_encryption_manager_get_receive_key(*encryption_manager, encryption_index);
+        send_key := netcode_encryption_manager_get_send_key(encryption_manager, encryption_index);
+        receive_key := netcode_encryption_manager_get_receive_key(encryption_manager, encryption_index);
 
         assert_null(send_key);
         assert_null(receive_key);
@@ -991,15 +991,15 @@ test_encryption_manager :: () {
         TEST_TIMEOUT_SECONDS)
     );
 
-    encryption_index := netcode_encryption_manager_find_encryption_mapping(*encryption_manager, encryption_mapping[0].address, time);
+    encryption_index := netcode_encryption_manager_find_encryption_mapping(encryption_manager, encryption_mapping[0].address, time);
 
     assert_not_equal(encryption_index, -1);
 
-    assert_equal(netcode_encryption_manager_find_encryption_mapping(*encryption_manager, encryption_mapping[0].address, time + milliseconds_to_apollo(1100)), -1);
+    assert_equal(netcode_encryption_manager_find_encryption_mapping(encryption_manager, encryption_mapping[0].address, time + milliseconds_to_apollo(1100)), -1);
 
     netcode_encryption_manager_set_expire_time(*encryption_manager, encryption_index, seconds_to_apollo(-1));
 
-    assert_equal(netcode_encryption_manager_find_encryption_mapping(*encryption_manager, encryption_mapping[0].address, time), encryption_index);
+    assert_equal(netcode_encryption_manager_find_encryption_mapping(encryption_manager, encryption_mapping[0].address, time), encryption_index);
 }
 
 test_replay_protection :: () {
@@ -1047,7 +1047,7 @@ test_replay_protection :: () {
 test_client_create :: () {
     {
         client_config: netcode_client_config_t;
-        client := netcode_client_create("127.0.0.1:40000", *client_config, .{});
+        client := netcode_client_create("127.0.0.1:40000", client_config, .{});
 
         test_address: netcode_address_t;
         netcode_parse_address("127.0.0.1:40000", *test_address);
@@ -1055,14 +1055,14 @@ test_client_create :: () {
         assert_not_null(client);
         assert_not_equal(client.socket_holder.ipv4.handle, INVALID_SOCKET);
         assert_equal(client.socket_holder.ipv6.handle, INVALID_SOCKET);
-        assert_true(netcode_address_equal(client.address, *test_address));
+        assert_true(netcode_address_equal(client.address, test_address));
 
         netcode_client_destroy(client);
     }
 
     {
         client_config: netcode_client_config_t;
-        client := netcode_client_create("[::]:50000", *client_config, .{});
+        client := netcode_client_create("[::]:50000", client_config, .{});
 
         test_address: netcode_address_t;
         netcode_parse_address("[::]:50000", *test_address);
@@ -1070,14 +1070,14 @@ test_client_create :: () {
         assert_not_null(client);
         assert_equal(client.socket_holder.ipv4.handle, INVALID_SOCKET);
         assert_not_equal(client.socket_holder.ipv6.handle, INVALID_SOCKET);
-        assert_true(netcode_address_equal(client.address, *test_address));
+        assert_true(netcode_address_equal(client.address, test_address));
 
         netcode_client_destroy(client);
     }
 
     {
         client_config: netcode_client_config_t;
-        client := netcode_client_create_overload("127.0.0.1:40000", "[::]:50000", *client_config, .{});
+        client := netcode_client_create_overload("127.0.0.1:40000", "[::]:50000", client_config, .{});
 
         test_address: netcode_address_t;
         netcode_parse_address("127.0.0.1:40000", *test_address);
@@ -1085,14 +1085,14 @@ test_client_create :: () {
         assert_not_null(client);
         assert_not_equal(client.socket_holder.ipv4.handle, INVALID_SOCKET);
         assert_not_equal(client.socket_holder.ipv6.handle, INVALID_SOCKET);
-        assert_true(netcode_address_equal(client.address, *test_address));
+        assert_true(netcode_address_equal(client.address, test_address));
 
         netcode_client_destroy(client);
     }
 
     {
         client_config: netcode_client_config_t;
-        client := netcode_client_create_overload("[::]:50000", "127.0.0.1:40000", *client_config, .{});
+        client := netcode_client_create_overload("[::]:50000", "127.0.0.1:40000", client_config, .{});
 
         test_address: netcode_address_t;
         netcode_parse_address("[::]:50000", *test_address);
@@ -1100,7 +1100,7 @@ test_client_create :: () {
         assert_not_null(client);
         assert_not_equal(client.socket_holder.ipv4.handle, INVALID_SOCKET);
         assert_not_equal(client.socket_holder.ipv6.handle, INVALID_SOCKET);
-        assert_true(netcode_address_equal(client.address, *test_address));
+        assert_true(netcode_address_equal(client.address, test_address));
 
         netcode_client_destroy(client);
     }
@@ -1109,7 +1109,7 @@ test_client_create :: () {
 test_server_create :: () {
     {
         server_config: netcode_server_config_t;
-        server := netcode_server_create("127.0.0.1:40000", *server_config, .{});
+        server := netcode_server_create("127.0.0.1:40000", server_config, .{});
 
         test_address: netcode_address_t;
         netcode_parse_address("127.0.0.1:40000", *test_address);
@@ -1117,14 +1117,14 @@ test_server_create :: () {
         assert_not_null(server);
         assert_not_equal(server.socket_holder.ipv4.handle, INVALID_SOCKET);
         assert_equal(server.socket_holder.ipv6.handle, INVALID_SOCKET);
-        assert_true(netcode_address_equal(*server.address, *test_address));
+        assert_true(netcode_address_equal(server.address, test_address));
 
         netcode_server_destroy(server);
     }
 
     {
         server_config: netcode_server_config_t;
-        server := netcode_server_create("[::1]:50000", *server_config, .{});
+        server := netcode_server_create("[::1]:50000", server_config, .{});
 
         test_address: netcode_address_t;
         netcode_parse_address("[::1]:50000", *test_address);
@@ -1132,14 +1132,14 @@ test_server_create :: () {
         assert_not_null(server);
         assert_equal(server.socket_holder.ipv4.handle, INVALID_SOCKET);
         assert_not_equal(server.socket_holder.ipv6.handle, INVALID_SOCKET);
-        assert_true(netcode_address_equal(*server.address, *test_address));
+        assert_true(netcode_address_equal(server.address, test_address));
 
         netcode_server_destroy(server);
     }
 
     {
         server_config: netcode_server_config_t;
-        server := netcode_server_create_overload("127.0.0.1:40000", "[::1]:50000", *server_config, .{});
+        server := netcode_server_create_overload("127.0.0.1:40000", "[::1]:50000", server_config, .{});
 
         test_address: netcode_address_t;
         netcode_parse_address("127.0.0.1:40000", *test_address);
@@ -1147,14 +1147,14 @@ test_server_create :: () {
         assert_not_null(server);
         assert_not_equal(server.socket_holder.ipv4.handle, INVALID_SOCKET);
         assert_not_equal(server.socket_holder.ipv6.handle, INVALID_SOCKET);
-        assert_true(netcode_address_equal(*server.address, *test_address));
+        assert_true(netcode_address_equal(server.address, test_address));
 
         netcode_server_destroy(server);
     }
 
     {
         server_config: netcode_server_config_t;
-        server := netcode_server_create_overload("[::1]:50000", "127.0.0.1:40000", *server_config, .{});
+        server := netcode_server_create_overload("[::1]:50000", "127.0.0.1:40000", server_config, .{});
 
         test_address: netcode_address_t;
         netcode_parse_address("[::1]:50000", *test_address);
@@ -1162,7 +1162,7 @@ test_server_create :: () {
         assert_not_null(server);
         assert_not_equal(server.socket_holder.ipv4.handle, INVALID_SOCKET);
         assert_not_equal(server.socket_holder.ipv6.handle, INVALID_SOCKET);
-        assert_true(netcode_address_equal(*server.address, *test_address));
+        assert_true(netcode_address_equal(server.address, test_address));
 
         netcode_server_destroy(server);
     }
@@ -1189,17 +1189,17 @@ test_client_server_connect :: () {
     client_config: netcode_client_config_t;
     client_config.network_simulator = network_simulator;
 
-    client := netcode_client_create("[::]:50000", *client_config, time);
+    client := netcode_client_create("[::]:50000", client_config, time);
 
     assert_not_null(client);
 
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
 
     server_address := "[::1]:40000";
-    server := netcode_server_create(server_address, *server_config, time);
+    server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
 
     netcode_server_start(server, 1);
@@ -1300,7 +1300,7 @@ client_server_socket_connect :: (client_address: string, client_address2: string
 
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
     server := netcode_server_create_overload(server_address, server_address2, server_config, time);
     assert_not_null(server);
 
@@ -1369,7 +1369,7 @@ test_client_server_keep_alive :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
 
     server_address := "[::1]:40000";
     server := netcode_server_create(server_address, server_config, time);
@@ -1449,7 +1449,7 @@ test_client_server_multiple_clients :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
@@ -1650,7 +1650,7 @@ test_client_server_multiple_servers :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
     server := netcode_server_create("[::1]:40000", server_config, time);
     assert_not_null(server);
 
@@ -1826,7 +1826,7 @@ test_client_error_connection_timed_out :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
 
@@ -1900,7 +1900,7 @@ test_client_error_connection_response_timeout :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
 
@@ -1958,7 +1958,7 @@ test_client_error_connection_request_timeout :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
 
@@ -2018,7 +2018,7 @@ test_client_error_connection_denied :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
 
@@ -2111,7 +2111,7 @@ test_client_side_disconnect :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
@@ -2188,7 +2188,7 @@ test_server_side_disconnect :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
@@ -2271,7 +2271,7 @@ test_client_reconnect :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
 
     server := netcode_server_create("[::1]:40000", server_config, time);
     assert_not_null(server);
@@ -2381,7 +2381,7 @@ test_disable_timeout :: () {
     server_config: netcode_server_config_t;
     server_config.protocol_id = TEST_PROTOCOL_ID;
     server_config.network_simulator = network_simulator;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
@@ -2529,7 +2529,7 @@ test_loopback :: () {
     server_config.network_simulator = network_simulator;
     server_config.callback_context = *ctx;
     server_config.send_loopback_packet_callback = server_send_loopback_packet_callback;
-    array_copy_data(server_config.private_key, private_key);
+    server_config.private_key = private_key;
 
     server := netcode_server_create(server_address, server_config, time);
     assert_not_null(server);
